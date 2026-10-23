@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-labelledby="title desc">
+  <title id="title">HTML Canvas Video</title>
+  <desc id="desc">把想法写成会动的画面。HTML Canvas、Web Audio 与本地 MP4 导出。</desc>
+  <defs>
+    <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#101923"/><stop offset="1" stop-color="#18283a"/></linearGradient>
+    <radialGradient id="glow"><stop stop-color="#86efc4" stop-opacity=".16"/><stop offset="1" stop-color="#86efc4" stop-opacity="0"/></radialGradient>
+    <linearGradient id="line"><stop stop-color="#86efc4" stop-opacity=".1"/><stop offset="1" stop-color="#86efc4"/></linearGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#fff" stroke-opacity=".025"/></pattern>
+    <clipPath id="clip"><rect x="664" y="122" width="536" height="354" rx="18"/></clipPath>
+  </defs>
+  <rect width="1280" height="640" rx="28" fill="url(#bg)"/>
+  <rect width="1280" height="640" rx="28" fill="url(#grid)"/>
+  <circle cx="1070" cy="310" r="330" fill="url(#glow)"/>
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+    <rect x="72" y="72" width="162" height="30" rx="15" fill="#86efc4" fill-opacity=".1" stroke="#86efc4" stroke-opacity=".28"/>
+    <circle cx="89" cy="87" r="4" fill="#86efc4"/><text x="102" y="92" fill="#86efc4" font-size="12" font-weight="600" letter-spacing="1.4">CODEX SKILL</text>
+    <text x="72" y="188" fill="#fff4dc" font-size="56" font-weight="750" letter-spacing="-2">HTML Canvas</text>
+    <text x="72" y="254" fill="#86efc4" font-size="56" font-weight="750" letter-spacing="-2">Video</text>
+    <text x="72" y="326" fill="#fff4dc" font-size="32" font-weight="600">把想法写成会动的画面。</text>
+    <text x="74" y="370" fill="#a9bac9" font-size="18">可编辑的 HTML · 可拖动的预览 · 带声音的 MP4</text>
+    <path d="M74 414H540" stroke="#334354"/>
+    <g fill="#a9bac9" font-size="13" letter-spacing="1.5"><text x="74" y="449">CANVAS</text><text x="229" y="449">WEB AUDIO</text><text x="420" y="449">LOCAL EXPORT</text></g>
+    <g fill="#86efc4" font-size="15"><text x="190" y="449">＋</text><text x="373" y="449">→</text></g>
+    <rect x="664" y="122" width="536" height="354" rx="18" fill="#0b131d" stroke="#334354"/>
+    <g clip-path="url(#clip)">
+      <path d="M664 160H1200" stroke="#334354"/>
+      <circle cx="685" cy="141" r="4" fill="#ffb16e"/><circle cx="700" cy="141" r="4" fill="#86efc4"/><circle cx="715" cy="141" r="4" fill="#8ca5ff"/>
+      <text x="1178" y="146" fill="#718596" font-size="11" text-anchor="end" letter-spacing="1.2">PREVIEW · 00:02.40</text>
+      <g fill="#718596" opacity=".4"><rect x="718" y="206" width="3" height="3"/><rect x="839" y="264" width="3" height="3"/><rect x="948" y="188" width="3" height="3"/><rect x="1127" y="256" width="3" height="3"/><rect x="1093" y="377" width="3" height="3"/><rect x="771" y="389" width="3" height="3"/><rect x="916" y="350" width="3" height="3"/></g>
+      <text x="932" y="224" fill="#fff4dc" font-size="24" font-weight="600" text-anchor="middle">从一个像素，到一段动画</text>
+      <path d="M716 358Q932 214 1148 358" fill="none" stroke="#334354" stroke-width="2"/>
+      <path d="M716 358Q884 246 1051 307" fill="none" stroke="url(#line)" stroke-width="3"/>
+      <g transform="translate(1051 307) rotate(24)"><rect x="-29" y="-29" width="58" height="58" rx="4" fill="#86efc4" opacity=".06"/><rect x="-17" y="-17" width="34" height="34" fill="#86efc4"/><rect x="-5" y="-5" width="10" height="10" fill="#fff4dc"/></g>
+      <rect x="1003" y="290" width="10" height="10" fill="#ffb16e" opacity=".6"/><rect x="976" y="282" width="9" height="9" fill="#8ca5ff" opacity=".4"/><rect x="949" y="279" width="8" height="8" fill="#86efc4" opacity=".25"/>
+      <text x="932" y="402" fill="#a9bac9" font-size="13" text-anchor="middle">画面与声音，共用一条时间轴</text>
+      <path d="M692 439H1172" stroke="#334354" stroke-width="3"/><path d="M692 439H979" stroke="#86efc4" stroke-width="3"/><circle cx="979" cy="439" r="5" fill="#86efc4"/>
+    </g>
+    <rect x="716" y="500" width="432" height="58" rx="12" fill="#101923" stroke="#334354"/>
+    <text x="740" y="535" fill="#86efc4" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16">render(t)</text>
+    <text x="859" y="535" fill="#718596" font-size="18">→</text><text x="894" y="535" fill="#a9bac9" font-size="14">每一帧，都能回到那一秒。</text>
+    <text x="74" y="566" fill="#718596" font-size="12" letter-spacing="1.5">AN IDEA. A TIMELINE. A FILM.</text>
+  </g>
+</svg>

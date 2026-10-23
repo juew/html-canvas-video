@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>本地动画预览</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px; background: #101923; color: #fff4dc; font: 15px system-ui, sans-serif; }
+  main { max-width: 900px; margin: auto; }
+  canvas { display: block; width: 100%; height: auto; border: 1px solid #334354; }
+  canvas:fullscreen { width: 100vw; height: 100vh; object-fit: contain; background: #101923; }
+  .controls { display: flex; align-items: center; gap: 16px; margin-top: 16px; }
+  button { padding: 9px 18px; border: 0; background: #86efc4; color: #101923; font: inherit; cursor: pointer; }
+  input { flex: 1; min-width: 0; accent-color: #86efc4; }
+  :focus-visible { outline: 3px solid #ffb16e; outline-offset: 4px; }
+  output, p { color: #a9bac9; }
+</style>
+<main>
+  <canvas id="film" role="img" aria-label="方块沿轨迹飞行、汇成光圈的原创程序动画"></canvas>
+  <div class="controls">
+    <button id="play" disabled>播放</button>
+    <input id="seek" type="range" min="0" step="0.01" value="0" disabled aria-label="播放进度">
+    <output id="clock"></output>
+  </div>
+  <p id="status">正在准备字体和本地电子音……</p>
+</main>
+<script>
+'use strict';
+// New films replace this sample's story, artwork, copy and music; retain the export plumbing.
+const VIDEO = { width: 640, height: 360, duration: 4, fps: 30 };
+const AUDIO_CHANNELS = 2; // 1 or 2; default notes alternate left/right.
+// Declare every custom web font and its actual Chinese text; load its CSS in <head>.
+// Example: {spec: '400 32px "Ma Shan Zheng"', text: '从一个像素到一段动画'}
+const FONTS = [];
+const q = new URLSearchParams(location.search);
+const exporting = q.has('export');
+const stillTimes = q.has('stills') ? q.get('stills').split(',').map(Number) : null;
+for (const key of ['width', 'height', 'fps']) if (q.has(key)) VIDEO[key] = Number(q.get(key));
+const film = document.querySelector('#film');
+const play = document.querySelector('#play'), seek = document.querySelector('#seek');
+const clock = document.querySelector('#clock'), status = document.querySelector('#status');
+film.width = VIDEO.width; film.height = VIDEO.height; seek.max = VIDEO.duration;
+const clamp = n => Math.max(0, Math.min(1, n));
+const ease = n => 1 - (1 - clamp(n)) ** 3;
+const colors = ['#86efc4', '#ffb16e', '#8ca5ff'];
+// Fixed arithmetic positions keep the particles identical after seeks and reloads.
+const stars = Array.from({length: 36}, (_, i) => ({x: ((i * 137 + 31) % 997) / 997, y: ((i * 173 + 59) % 991) / 991}));
+const notes = [{at: .06, hz: 523.25}, {at: .29, hz: 659.25}, {at: .52, hz: 783.99}, {at: .77, hz: 1046.50}];
+
+function render(t, target = film) {
+  const g = target.getContext('2d', {alpha: false});
+  const W = target.width, H = target.height, s = Math.min(W, H), p = clamp(t / VIDEO.duration);
+  g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
+  g.fillStyle = '#101923'; g.fillRect(0, 0, W, H);
+  for (let i = 0; i < stars.length; i++) {
+    const star = stars[i]; g.globalAlpha = .2 + .18 * Math.sin(t * 2 + i);
+    g.fillStyle = '#a9bac9'; g.fillRect(star.x * W, star.y * H, s * .005, s * .005);
+  }
+  g.globalAlpha = 1;
+  g.strokeStyle = '#334354'; g.lineWidth = Math.max(1, s * .004);
+  g.beginPath(); g.moveTo(W * .12, H * .66); g.quadraticCurveTo(W * .5, H * .28, W * .88, H * .66); g.stroke();
+  const travel = ease(p / .78), x = W * (.12 + .76 * travel);
+  const y = H * (.66 - .76 * travel * (1 - travel)), u = s * .035;
+  for (let i = 5; i >= 1; i--) {
+    const trail = clamp(travel - i * .045);
+    g.globalAlpha = (6 - i) * .07; g.fillStyle = colors[i % 3];
+    g.fillRect(W * (.12 + .76 * trail) - u / 2, H * (.66 - .76 * trail * (1 - trail)) - u / 2, u, u);
+  }
+  g.globalAlpha = 1; g.save(); g.translate(x, y); g.rotate(t * 1.5);
+  g.fillStyle = '#86efc4'; g.fillRect(-u, -u, u * 2, u * 2);
+  g.fillStyle = '#fff4dc'; g.fillRect(-u * .32, -u * .32, u * .64, u * .64); g.restore();
+  const burst = clamp((p - .77) / .23);
+  if (burst > 0) for (let i = 0; i < 12; i++) {
+    const angle = i * Math.PI / 6, radius = s * (.04 + burst * .19);
+    g.globalAlpha = 1 - burst; g.fillStyle = colors[i % 3];
+    g.fillRect(x + Math.cos(angle) * radius, y + Math.sin(angle) * radius, s * .014, s * .014);
+  }
+  g.globalAlpha = 1; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillStyle = '#fff4dc'; g.font = `600 ${s * .076}px system-ui, sans-serif`;
+  g.fillText(p < .52 ? '从一个像素' : '到一段动画', W / 2, H * .18);
+  g.fillStyle = '#a9bac9'; g.font = `${s * .039}px system-ui, sans-serif`;
+  g.fillText('画面与声音，共用一条时间轴', W / 2, H * .87);
+  g.fillStyle = '#334354'; g.fillRect(W * .12, H * .94, W * .76, s * .006);
+  g.fillStyle = '#86efc4'; g.fillRect(W * .12, H * .94, W * .76 * p, s * .006);
+}
+
+async function makeAudio() {
+  const sampleRate = 48000;
+  const ac = new OfflineAudioContext(AUDIO_CHANNELS, Math.ceil(VIDEO.duration * sampleRate), sampleRate);
+  for (const [i, note] of notes.entries()) {
+    const start = note.at * VIDEO.duration, duration = Math.min(.24, VIDEO.duration - start);
+    const osc = ac.createOscillator(), gain = ac.createGain();
+    osc.type = 'triangle'; osc.frequency.setValueAtTime(note.hz, start);
+    gain.gain.setValueAtTime(0, start);
+    gain.gain.linearRampToValueAtTime(.16, start + Math.min(.012, duration / 3));
+    gain.gain.exponentialRampToValueAtTime(.0001, start + duration);
+    osc.connect(gain);
+    if (AUDIO_CHANNELS === 2) {
+      const pan = ac.createStereoPanner(); pan.pan.value = i % 2 ? .75 : -.75;
+      gain.connect(pan); pan.connect(ac.destination);
+    } else gain.connect(ac.destination);
+    osc.start(start); osc.stop(start + duration);
+  }
+  return ac.startRendering();
+}
+
+function wavBlob(buffer) {
+  const channels = Array.from({length: buffer.numberOfChannels}, (_, i) => buffer.getChannelData(i));
+  const blockSize = channels.length * 2, bytes = buffer.length * blockSize;
+  const data = new DataView(new ArrayBuffer(44 + bytes));
+  const word = (offset, value) => [...value].forEach((char, i) => data.setUint8(offset + i, char.charCodeAt(0)));
+  word(0, 'RIFF'); data.setUint32(4, 36 + bytes, true); word(8, 'WAVE'); word(12, 'fmt ');
+  data.setUint32(16, 16, true); data.setUint16(20, 1, true); data.setUint16(22, channels.length, true);
+  data.setUint32(24, buffer.sampleRate, true); data.setUint32(28, buffer.sampleRate * blockSize, true);
+  data.setUint16(32, blockSize, true); data.setUint16(34, 16, true); word(36, 'data');
+  data.setUint32(40, bytes, true);
+  for (let i = 0; i < buffer.length; i++) for (let c = 0; c < channels.length; c++) {
+    data.setInt16(44 + i * blockSize + c * 2, Math.round(Math.max(-1, Math.min(1, channels[c][i])) * 32767), true);
+  }
+  return new Blob([data.buffer], {type: 'audio/wav'});
+}
+
+function show(t) {
+  render(t); seek.value = t; clock.value = `${t.toFixed(2)} / ${VIDEO.duration.toFixed(2)} 秒`;
+}
+function preview(buffer) {
+  const audio = new AudioContext(), volume = audio.createGain(); volume.connect(audio.destination);
+  let source = null, playing = true, audioClock = false, muted = false;
+  let offset = 0, anchor = performance.now(), audioAnchor = 0, audioOffset = 0;
+  const bound = t => Math.max(0, Math.min(VIDEO.duration, t));
+  function time() {
+    return bound(!playing ? offset : audioClock
+      ? audio.currentTime - audioAnchor + audioOffset : offset + (performance.now() - anchor) / 1000);
+  }
+  function stopSound() {
+    if (source) { source.stop(); source.disconnect(); source = null; }
+  }
+  function statusText() {
+    status.textContent = audio.state !== 'running' ? '画面已自动播放 · 点击画面启声'
+      : `${muted ? '已静音' : '原创立体声'} · 空格暂停 · ←/→ 跳转 5 秒 · F 全屏 · M 静音`;
+  }
+  function joinAudio() {
+    if (audio.state !== 'running' || audioClock || !playing) { statusText(); return; }
+    const t = time();
+    if (t >= VIDEO.duration) return;
+    stopSound(); source = audio.createBufferSource(); source.buffer = buffer; source.connect(volume);
+    audioOffset = t; audioAnchor = audio.currentTime; source.start(audioAnchor, t); audioClock = true;
+    statusText();
+  }
+  function unlock() {
+    // Autoplay policy can leave resume() pending: never await it before drawing.
+    audio.resume().then(joinAudio).catch(() => statusText());
+    joinAudio(); statusText();
+  }
+  function jump(t) {
+    offset = bound(t); anchor = performance.now(); audioClock = false; stopSound();
+    show(offset); if (playing) joinAudio();
+  }
+  function toggle() {
+    if (playing) { offset = time(); playing = false; audioClock = false; stopSound(); }
+    else { if (offset >= VIDEO.duration - .01) offset = 0; anchor = performance.now(); playing = true; unlock(); }
+    play.textContent = playing ? '暂停' : '播放'; show(time());
+  }
+  audio.addEventListener('statechange', () => {
+    if (audio.state === 'running') joinAudio();
+    else if (audioClock) {
+      offset = time(); anchor = performance.now(); audioClock = false; stopSound(); statusText();
+    }
+  });
+  film.addEventListener('click', unlock);
+  play.addEventListener('click', toggle);
+  seek.addEventListener('input', () => jump(Number(seek.value)));
+  document.addEventListener('keydown', event => {
+    const editing = event.target.isContentEditable || /^(TEXTAREA|SELECT)$/.test(event.target.tagName)
+      || (event.target.tagName === 'INPUT' && event.target.type !== 'range');
+    if (event.ctrlKey || event.metaKey || event.altKey || editing) return;
+    if (event.code === 'Space') { event.preventDefault(); toggle(); }
+    else if (event.code === 'ArrowLeft' || event.code === 'ArrowRight') {
+      event.preventDefault(); jump(time() + (event.code === 'ArrowLeft' ? -5 : 5));
+    } else if (event.key.toLowerCase() === 'f') {
+      (document.fullscreenElement ? document.exitFullscreen() : film.requestFullscreen()).catch(() => {});
+    } else if (event.key.toLowerCase() === 'm') {
+      muted = !muted; volume.gain.value = muted ? 0 : 1; statusText();
+    }
+  });
+  function tick() {
+    if (playing) {
+      const t = time(); show(t);
+      if (t >= VIDEO.duration) { offset = VIDEO.duration; playing = false; audioClock = false; stopSound(); play.textContent = '播放'; }
+    }
+    requestAnimationFrame(tick);
+  }
+  play.disabled = false; seek.disabled = false; play.textContent = '暂停'; window.READY = true;
+  unlock(); requestAnimationFrame(tick);
+}
+
+async function loadFonts() {
+  for (const {spec, text} of FONTS) {
+    if (!spec || !text) throw new Error('FONTS 中每种自定义字体必须声明 spec 和实际绘制文字 text');
+    const loaded = await document.fonts.load(spec, text);
+    if (!loaded.length || loaded.some(face => face.status !== 'loaded') || !document.fonts.check(spec, text)) {
+      throw new Error(`字体加载失败：${spec}；请检查字体 CSS、网络和实际中文字形`);
+    }
+  }
+}
+
+async function post(path, body) {
+  const response = await fetch(path, {method: 'POST', body});
+  if (!response.ok) throw new Error(`${path}: ${await response.text()}`);
+}
+async function exportFilm(buffer) {
+  await post('/start', JSON.stringify({...VIDEO, ...(buffer ? {channels: buffer.numberOfChannels} : {})}));
+  if (buffer) await post('/audio', wavBlob(buffer));
+  const frame = new OffscreenCanvas(VIDEO.width, VIDEO.height);
+  const count = stillTimes ? stillTimes.length : Math.ceil(VIDEO.duration * VIDEO.fps);
+  for (let i = 0; i < count; i++) {
+    render(stillTimes ? stillTimes[i] : i / VIDEO.fps, frame);
+    await post(`/frame?i=${i}`, await frame.convertToBlob({type: 'image/jpeg', quality: .95}));
+  }
+  await post('/done', '');
+}
+(async () => {
+  await loadFonts(); show(0);
+  if (exporting && stillTimes) { await exportFilm(null); return; }
+  const buffer = await makeAudio();
+  if (exporting) { await exportFilm(buffer); return; }
+  preview(buffer);
+})().catch(error => {
+  status.textContent = error.message;
+  if (exporting) post('/error', String(error.stack || error)).catch(() => {});
+  else console.error(error);
+});
+</script>
+</html>

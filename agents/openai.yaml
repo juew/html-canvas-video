@@ -1,0 +1,4 @@
+interface:
+  display_name: "本地 HTML 动画"
+  short_description: "用本地 HTML 与 Canvas 制作可拖动预览、电子音动画并导出 MP4"
+  default_prompt: "使用 $html-canvas-video，围绕本次主题制作原创、可预览和拖动的本地程序动画，并导出 MP4。"
